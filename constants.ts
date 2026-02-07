@@ -58,7 +58,7 @@ export const VENDING_MACHINE_ITEMS: Item[] = [
     id: 'item_pillow_cozy',
     name: 'Cozy Pillow',
     type: 'TOOL',
-    description: 'Softest dreams. Toggles "Cozy Mode" text.',
+    description: 'Softest dreams. Unlocks Cozy Mode.',
     cost: 50,
     icon: '🛌',
     tags: ['general', 'tool', 'cozy']
@@ -111,6 +111,33 @@ export const VENDING_MACHINE_ITEMS: Item[] = [
     icon: '🧤',
     tags: ['orthopedics', 'tool']
   },
+  {
+    id: 'item_pulse_ox',
+    name: 'Bunny Pulse Ox',
+    type: 'TOOL',
+    description: 'Check oxygen saturation instantly. (+XP Pulm)',
+    cost: 65,
+    icon: '📟',
+    tags: ['pulmonology', 'tool']
+  },
+  {
+    id: 'item_probiotics',
+    name: 'Super Probiotics',
+    type: 'CONSUMABLE',
+    description: 'Healthy gut, healthy life. (+Coins Gastro)',
+    cost: 45,
+    icon: 'microbe', // lucide doesn't have microbe, using fallback or emoji
+    tags: ['gastro', 'consumable']
+  },
+  {
+    id: 'item_epipen_trainer',
+    name: 'Epi Trainer',
+    type: 'TOOL',
+    description: 'Practice safe injections. (+XP Allergy)',
+    cost: 70,
+    icon: '💉',
+    tags: ['allergy', 'tool']
+  },
 
   // --- Cosmetic / High Tier (Long Term Goals) ---
   {
@@ -159,7 +186,6 @@ export const INITIAL_CASES: PatientCase[] = [
     patientAge: '28 yo',
     patientVisual: '🤕 A stylish lady wearing sunglasses indoors.',
     medicalTheme: 'Neurology',
-    // Fallbacks
     chiefComplaint: '"My head is pounding on one side!"',
     hpi: 'Patient reports pulsating headache on left side for 4 hours. Nausea present. States "light hurts my eyes".',
     physicalExam: 'Cranial nerves II-XII intact. Significant [Photophobia|Sensitivity to light] and [Phonophobia|Sensitivity to sound]. No neck stiffness.',
