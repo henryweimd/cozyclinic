@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { PatientCase } from "../types";
 
@@ -18,6 +19,7 @@ Requirements:
 7. Variants: Provide TWO versions of the textual content: 
    - 'regular': Standard medical terminology (e.g., "Photophobia", "Erythema Migrans").
    - 'cozy': Plain English, accessible to laypeople and children. Use real medication names but explain what they do. Avoid excessive baby-talk (no "ouchie" or "boo-boo" unless it's a direct quote from a child). Focus on clarity and analogies (e.g., instead of "Photophobia", say "Lights hurt their eyes").
+8. Metadata: Provide an authoritative link and a 'learningTidbit' - a fascinating one-sentence medical fact directly related to the diagnosis (e.g., "The spleen is fragile in Mono, making contact sports dangerous.").
 `;
 
 const variantSchema: Schema = {
@@ -100,9 +102,10 @@ const caseSchema: Schema = {
         required: ["regular", "cozy"]
     },
 
-    authoritativeLink: { type: Type.STRING }
+    authoritativeLink: { type: Type.STRING },
+    learningTidbit: { type: Type.STRING, description: "A one-sentence interesting medical fact about the case." }
   },
-  required: ["patientName", "patientAge", "patientVisual", "medicalTheme", "vitals", "variants"]
+  required: ["patientName", "patientAge", "patientVisual", "medicalTheme", "vitals", "variants", "authoritativeLink", "learningTidbit"]
 };
 
 export const generateCase = async (playerLevelTitle: string): Promise<PatientCase | null> => {

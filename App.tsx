@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import { GameHeader } from './components/GameHeader';
@@ -5,6 +6,7 @@ import { PatientCard } from './components/PatientCard';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { VendingMachine } from './components/VendingMachine';
 import { StartScreen } from './components/StartScreen';
+import { TestingScreen } from './components/TestingScreen';
 import { 
   PlayerState, 
   PatientCase, 
@@ -15,7 +17,7 @@ import {
 import { 
   INITIAL_PLAYER_STATE, 
   INITIAL_CASES, 
-  VENDING_MACHINE_ITEMS,
+  VENDING_MACHINE_ITEMS, 
   LEVEL_TITLES 
 } from './constants';
 import { generateCase, generateMedicalImage } from './services/geminiService';
@@ -30,7 +32,27 @@ const App: React.FC = () => {
   
   // Case Management
   const [currentCaseIndex, setCurrentCaseIndex] = useState(0);
-  const [generatedCases, setGeneratedCases] = useState<PatientCase[]>([]);
+  
+  // Persistent Storage Logic for Generated Cases
+  const [generatedCases, setGeneratedCases] = useState<PatientCase[]>(() => {
+    try {
+      const saved = localStorage.getItem('cozy_clinic_cases');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Failed to load cases from persistence", e);
+      return [];
+    }
+  });
+
+  // Save to persistence whenever generatedCases changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('cozy_clinic_cases', JSON.stringify(generatedCases));
+    } catch (e) {
+      console.error("Failed to save cases to persistence", e);
+    }
+  }, [generatedCases]);
+
   const [activeCase, setActiveCase] = useState<PatientCase | null>(null);
   const [lastChoice, setLastChoice] = useState<Choice | null>(null);
   
@@ -207,6 +229,38 @@ const App: React.FC = () => {
       }
   }, [currentCaseIndex, generatedCases.length, isGenerating]);
 
+  // Manual generation logic with timeout for the Testing Screen
+  const handleManualGenerate = async () => {
+    setIsGenerating(true);
+    
+    // Create a timeout promise that rejects after 10 seconds
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => {
+        console.warn("Manual generation timed out");
+        resolve(null); 
+      }, 10000);
+    });
+
+    try {
+      // Race the generation against the timeout
+      const newCase = await Promise.race([
+        generateCase(playerState.levelTitle),
+        timeoutPromise
+      ]);
+
+      if (newCase) {
+        setGeneratedCases(prev => [newCase, ...prev]);
+      } else {
+        // Handle timeout or null response (UI will just stop loading)
+        // Ideally show a toast, but keeping it simple as requested
+      }
+    } catch (e) {
+      console.error("Manual generation failed", e);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleNextCase = () => {
     // Basic logic to pick random or sequential for "Next"
     // Since we want variety, let's try to pick from Generated first, then random Initial
@@ -253,12 +307,23 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout isCozyMode={isCozyMode}>
       {phase === GamePhase.START && (
         <StartScreen onStart={handleStartGame} />
       )}
 
-      {phase !== GamePhase.START && (
+      {phase === GamePhase.TESTING && (
+          <TestingScreen 
+            initialCases={INITIAL_CASES}
+            generatedCases={generatedCases}
+            onBackToStart={() => setPhase(GamePhase.START)}
+            onBackToGame={() => setPhase(GamePhase.SCENARIO)}
+            onGenerate={handleManualGenerate}
+            isGenerating={isGenerating}
+          />
+      )}
+
+      {phase !== GamePhase.START && phase !== GamePhase.TESTING && (
         <>
            <GameHeader 
                 playerState={playerState} 
@@ -267,7 +332,7 @@ const App: React.FC = () => {
                 onToggleCozyMode={() => setIsCozyMode(prev => !prev)}
            />
            
-           <div className="relative flex-1 flex flex-col overflow-hidden bg-white">
+           <div className={`relative flex-1 flex flex-col overflow-hidden transition-colors duration-700 ease-in-out ${isCozyMode ? 'bg-orange-50/30' : 'bg-slate-50'}`}>
                 {activeCase && (
                     <PatientCard 
                         patientCase={activeCase} 
@@ -297,6 +362,10 @@ const App: React.FC = () => {
                     playerState={playerState}
                     onBuy={handleBuyItem}
                     onClose={() => setIsShopOpen(false)}
+                    onOpenTesting={() => {
+                        setIsShopOpen(false);
+                        setPhase(GamePhase.TESTING);
+                    }}
                />
            )}
         </>

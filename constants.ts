@@ -1,3 +1,4 @@
+
 import { PatientCase, Item, PlayerState } from './types';
 
 export const INITIAL_PLAYER_STATE: PlayerState = {
@@ -272,7 +273,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://americanmigrainefoundation.org/resource-library/what-is-migraine/'
+    authoritativeLink: 'https://americanmigrainefoundation.org/resource-library/what-is-migraine/',
+    learningTidbit: 'Triptans work by binding to serotonin receptors to constrict swollen blood vessels in the brain.'
   },
 
   // CASE 2: Appendicitis (Peds)
@@ -368,7 +370,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.statpearls.com/ArticleLibrary/viewarticle/17796'
+    authoritativeLink: 'https://www.statpearls.com/ArticleLibrary/viewarticle/17796',
+    learningTidbit: 'Pain that starts at the navel and moves to the right lower belly is a classic sign of appendicitis.'
   },
 
   // CASE 3: Orthostasis (Cardio)
@@ -463,7 +466,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.mayoclinic.org/diseases-conditions/orthostatic-hypotension/symptoms-causes/syc-20352548'
+    authoritativeLink: 'https://www.mayoclinic.org/diseases-conditions/orthostatic-hypotension/symptoms-causes/syc-20352548',
+    learningTidbit: 'Blood pressure can drop rapidly when standing up (orthostasis) if blood vessels are dilated by medication.'
   },
 
   // CASE 4: Mono (Infectious)
@@ -559,7 +563,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.cdc.gov/epstein-barr/about-mono.html'
+    authoritativeLink: 'https://www.cdc.gov/epstein-barr/about-mono.html',
+    learningTidbit: 'The spleen can become enlarged and fragile in Mononucleosis, posing a rupture risk with contact sports.'
   },
 
   // CASE 5: Lyme (Derm)
@@ -655,7 +660,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.cdc.gov/lyme/signs_symptoms/index.html'
+    authoritativeLink: 'https://www.cdc.gov/lyme/signs_symptoms/index.html',
+    learningTidbit: 'The "Bull\'s Eye" rash is the hallmark sign of early Lyme disease and appears before blood tests turn positive.'
   },
 
   // CASE 6: GERD (Gastro)
@@ -750,7 +756,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://gi.org/topics/acid-reflux/'
+    authoritativeLink: 'https://gi.org/topics/acid-reflux/',
+    learningTidbit: 'Lying down after eating can allow stomach acid to leak backward into the esophagus, causing "heartburn".'
   },
 
   // CASE 7: Asthma (Pulm)
@@ -846,7 +853,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.nhlbi.nih.gov/health/asthma'
+    authoritativeLink: 'https://www.nhlbi.nih.gov/health/asthma',
+    learningTidbit: 'Asthma narrows the airways, causing a characteristic whistling sound called "wheezing" when breathing out.'
   },
 
   // CASE 8: Anaphylaxis (Allergy)
@@ -941,7 +949,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.aaaai.org/conditions-treatments/allergies/anaphylaxis'
+    authoritativeLink: 'https://www.aaaai.org/conditions-treatments/allergies/anaphylaxis',
+    learningTidbit: 'Epinephrine acts rapidly to constrict blood vessels and relax airway muscles, reversing life-threatening anaphylaxis.'
   },
 
   // CASE 9: Carpal Tunnel (Orthopedics)
@@ -1036,7 +1045,8 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://orthoinfo.aaos.org/en/diseases--conditions/carpal-tunnel-syndrome/'
+    authoritativeLink: 'https://orthoinfo.aaos.org/en/diseases--conditions/carpal-tunnel-syndrome/',
+    learningTidbit: 'The median nerve, which controls the thumb and first two fingers, gets compressed in Carpal Tunnel Syndrome.'
   },
 
   // CASE 10: Otitis Media (Pediatrics)
@@ -1131,6 +1141,7 @@ export const INITIAL_CASES: PatientCase[] = [
             ]
         }
     },
-    authoritativeLink: 'https://www.cdc.gov/antibiotic-use/ear-infection.html'
+    authoritativeLink: 'https://www.cdc.gov/antibiotic-use/ear-infection.html',
+    learningTidbit: 'A bulging, red eardrum is the key sign that separates a bacterial ear infection from a simple virus.'
   }
 ];

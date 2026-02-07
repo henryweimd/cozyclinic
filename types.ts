@@ -1,3 +1,4 @@
+
 export type OutcomeType = 'GOLD' | 'ACCEPTABLE' | 'SUBOPTIMAL' | 'DANGEROUS';
 
 export interface Choice {
@@ -41,6 +42,7 @@ export interface PatientCase {
       cozy: CaseVariant;
   };
   authoritativeLink?: string;
+  learningTidbit?: string;
 }
 
 export interface Item {
@@ -70,5 +72,6 @@ export enum GamePhase {
   SCENARIO,
   FEEDBACK,
   SHOP,
-  LOADING
+  LOADING,
+  TESTING
 }

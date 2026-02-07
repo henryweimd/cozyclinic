@@ -1,28 +1,36 @@
+
 import React from 'react';
 import { Item, PlayerState } from '../types';
-import { ShoppingBag, X } from 'lucide-react';
+import { ShoppingBag, X, Wrench } from 'lucide-react';
 
 interface VendingMachineProps {
   items: Item[];
   playerState: PlayerState;
   onBuy: (item: Item) => void;
   onClose: () => void;
+  onOpenTesting: () => void;
 }
 
-export const VendingMachine: React.FC<VendingMachineProps> = ({ items, playerState, onBuy, onClose }) => {
+export const VendingMachine: React.FC<VendingMachineProps> = ({ 
+  items, 
+  playerState, 
+  onBuy, 
+  onClose,
+  onOpenTesting
+}) => {
   return (
-    <div className="absolute inset-0 bg-pink-50 z-50 flex flex-col">
-      <div className="bg-white p-4 shadow-sm flex justify-between items-center">
+    <div className="absolute inset-0 bg-pink-50 z-50 flex flex-col animate-in slide-in-from-bottom duration-300">
+      <div className="bg-white p-4 shadow-sm flex justify-between items-center shrink-0">
         <div className="flex items-center space-x-2">
             <ShoppingBag className="text-pink-500" />
             <h2 className="text-xl font-bold text-slate-800">Cozy Vending</h2>
         </div>
-        <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200">
+        <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
             <X size={20} className="text-slate-600" />
         </button>
       </div>
 
-      <div className="bg-pink-100 py-3 px-4 flex justify-between items-center shadow-inner">
+      <div className="bg-pink-100 py-3 px-4 flex justify-between items-center shadow-inner shrink-0">
           <span className="text-pink-800 font-bold text-sm">Your Wallet:</span>
           <span className="text-xl font-bold text-yellow-600 bg-white px-3 py-1 rounded-lg shadow-sm border border-yellow-100">
               {playerState.coins} 🪙
@@ -41,7 +49,7 @@ export const VendingMachine: React.FC<VendingMachineProps> = ({ items, playerSta
                         {item.icon}
                     </div>
                     <h3 className="font-bold text-slate-800 text-sm mb-1">{item.name}</h3>
-                    <p className="text-xs text-slate-500 mb-4 h-10 overflow-hidden">{item.description}</p>
+                    <p className="text-xs text-slate-500 mb-4 h-10 overflow-hidden line-clamp-2">{item.description}</p>
                     
                     <button 
                         disabled={!canAfford || (isOwned && !isConsumable)}
@@ -61,8 +69,19 @@ export const VendingMachine: React.FC<VendingMachineProps> = ({ items, playerSta
         })}
       </div>
       
-      <div className="p-6 bg-white text-center text-xs text-slate-400 border-t border-slate-100">
-        New items arrive every shift! (Not really, just placeholder text)
+      <div className="shrink-0 bg-white border-t border-slate-100">
+        <div className="p-4 text-center text-xs text-slate-400 border-b border-slate-50">
+            New items arrive every shift!
+        </div>
+        
+        {/* Testing Link */}
+        <button 
+            onClick={onOpenTesting}
+            className="w-full p-4 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center space-x-2 text-slate-500 hover:text-pink-500 group"
+        >
+            <Wrench size={14} className="group-hover:rotate-45 transition-transform" />
+            <span className="text-xs font-bold uppercase tracking-wider">Open Developer Testing</span>
+        </button>
       </div>
     </div>
   );

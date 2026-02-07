@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { Choice, OutcomeType, PatientCase, Item } from '../types';
-import { ArrowRight, CheckCircle, AlertTriangle, ShieldAlert, ExternalLink, Pause, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle, AlertTriangle, ShieldAlert, ExternalLink, Pause, Play, Sparkles, BookOpen } from 'lucide-react';
 
 interface FeedbackOverlayProps {
   choice: Choice;
@@ -48,6 +49,23 @@ const getOutcomeConfig = (type: OutcomeType) => {
         sub: 'Dangerous Choice'
       };
   }
+};
+
+const getSourceName = (url: string) => {
+    try {
+        const hostname = new URL(url).hostname;
+        if (hostname.includes('cdc.gov')) return 'Centers for Disease Control (CDC)';
+        if (hostname.includes('mayoclinic.org')) return 'Mayo Clinic';
+        if (hostname.includes('nih.gov')) return 'National Institutes of Health (NIH)';
+        if (hostname.includes('statpearls')) return 'StatPearls (NCBI)';
+        if (hostname.includes('aaos.org')) return 'American Academy of Orthopaedic Surgeons';
+        if (hostname.includes('aaaai.org')) return 'AAAAI';
+        if (hostname.includes('gi.org')) return 'American College of Gastroenterology';
+        if (hostname.includes('migraine')) return 'American Migraine Foundation';
+        return hostname.replace('www.', '');
+    } catch {
+        return 'Medical Source';
+    }
 };
 
 export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({ 
@@ -161,25 +179,43 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
              </div>
         )}
 
-        {/* Link */}
+        {/* Link - Enhanced Section */}
         {patientCase.authoritativeLink && (
-            <a 
-                href={patientCase.authoritativeLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center p-3 bg-indigo-50 border border-indigo-100 rounded-xl transition-colors group"
-                onClick={() => setIsPaused(true)}
-            >
-                <div className="bg-white p-1.5 rounded-full mr-3 text-indigo-500">
-                    <ExternalLink size={14} />
+            <div className="mt-2">
+                <div className="flex items-center justify-between mb-1 px-1">
+                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <BookOpen size={10} />
+                        Learn More
+                     </span>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                    <h4 className="text-[10px] font-bold text-indigo-400 uppercase">Medical Source</h4>
-                    <p className="text-xs font-semibold text-indigo-900 truncate">
-                        Read more at {new URL(patientCase.authoritativeLink).hostname}
-                    </p>
-                </div>
-            </a>
+                <a 
+                    href={patientCase.authoritativeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start p-3 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all group relative overflow-hidden"
+                    onClick={() => setIsPaused(true)}
+                >
+                    <div className="absolute top-0 right-0 p-2 opacity-5 group-hover:opacity-10 transition-opacity">
+                         <ExternalLink size={64} className="text-indigo-500" />
+                    </div>
+                    
+                    <div className="bg-indigo-50 p-2 rounded-lg mr-3 text-indigo-600 shrink-0 group-hover:scale-110 transition-transform z-10">
+                        <ExternalLink size={18} />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0 z-10">
+                        <h4 className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                            {getSourceName(patientCase.authoritativeLink)}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                             {patientCase.learningTidbit || (isCozyMode 
+                                ? `See how real doctors treat ${patientCase.medicalTheme}!`
+                                : `Review authoritative guidelines and clinical protocols for ${patientCase.medicalTheme}.`)
+                            }
+                        </p>
+                    </div>
+                </a>
+            </div>
         )}
       </div>
 
