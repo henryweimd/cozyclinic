@@ -16,10 +16,17 @@ Requirements:
 5. Image Prompt: Describe the visual clinical finding for an AI image generator (e.g., 'swollen red knee', 'bullseye rash on arm'). 
    CRITICAL: The prompt MUST be for a visual depiction only. DO NOT ask for diagrams, charts, text overlays, or labels.
 6. Choices: 4 distinct options (GOLD, ACCEPTABLE, SUBOPTIMAL, DANGEROUS).
+   CRITICAL: The case MUST be solvable using standard medical deduction based on the HPI/Vitals without requiring special tools.
+   CRITICAL: The order of choices in 'variants.regular' and 'variants.cozy' MUST match exactly. 
+   (e.g., If Choice 0 in Regular is "Give Antibiotics" (GOLD), then Choice 0 in Cozy MUST be the cozy translation of "Give Antibiotics" (GOLD)). 
+   This is required so the game can shuffle them randomly while keeping the modes synchronized.
 7. Variants: Provide TWO versions of the textual content: 
    - 'regular': Standard medical terminology (e.g., "Photophobia", "Erythema Migrans").
-   - 'cozy': Plain English, accessible to laypeople and children. Use real medication names but explain what they do. Avoid excessive baby-talk (no "ouchie" or "boo-boo" unless it's a direct quote from a child). Focus on clarity and analogies (e.g., instead of "Photophobia", say "Lights hurt their eyes").
-8. Metadata: Provide an authoritative link and a 'learningTidbit' - a fascinating one-sentence medical fact directly related to the diagnosis (e.g., "The spleen is fragile in Mono, making contact sports dangerous.").
+   - 'cozy': Plain English, accessible to laypeople and children. Use real medication names but explain what they do. Avoid excessive baby-talk.
+8. Metadata: Provide an authoritative link and a 'learningTidbit' - a fascinating one-sentence medical fact directly related to the diagnosis.
+9. Advanced Diagnostics: Occasionally, define a tool that could reveal more information.
+   - requiredToolId: Choose from: 'item_stethoscope_gold', 'item_ultrasound', 'item_otoscope_pro', 'item_dermatoscope', 'item_pulse_ox', 'item_reflex_hammer_sparkle'.
+   - revealedClue: One sentence that confirms the diagnosis if the tool is used (e.g., "Ultrasound shows inflamed appendix").
 `;
 
 const variantSchema: Schema = {
@@ -103,7 +110,10 @@ const caseSchema: Schema = {
     },
 
     authoritativeLink: { type: Type.STRING },
-    learningTidbit: { type: Type.STRING, description: "A one-sentence interesting medical fact about the case." }
+    learningTidbit: { type: Type.STRING, description: "A one-sentence interesting medical fact about the case." },
+    
+    requiredToolId: { type: Type.STRING, description: "Optional item ID needed to reveal extra clue" },
+    revealedClue: { type: Type.STRING, description: "The extra clue revealed by the tool" }
   },
   required: ["patientName", "patientAge", "patientVisual", "medicalTheme", "vitals", "variants", "authoritativeLink", "learningTidbit"]
 };

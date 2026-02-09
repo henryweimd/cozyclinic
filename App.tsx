@@ -21,6 +21,7 @@ import {
   LEVEL_TITLES 
 } from './constants';
 import { generateCase, generateMedicalImage } from './services/geminiService';
+import { getRecommendedItems, getRandomCase, shuffleCaseChoices } from './utils';
 
 const App: React.FC = () => {
   const [phase, setPhase] = useState<GamePhase>(GamePhase.START);
@@ -66,9 +67,11 @@ const App: React.FC = () => {
 
   // --- SESSION INITIALIZATION ---
   useEffect(() => {
-    // Check if we have the new Migraine case (case_007) to show off variants
-    const startCase = INITIAL_CASES.find(c => c.id === 'case_007') || INITIAL_CASES[0];
+    // Start with a specific case to demo features or random
+    const startCase = shuffleCaseChoices(INITIAL_CASES[0]);
     setActiveCase(startCase);
+    
+    // Initial shop population (predictive)
     updateShopInventory(startCase.medicalTheme || "General", false);
   }, []);
 
@@ -100,44 +103,60 @@ const App: React.FC = () => {
             currentXp: 1500,
             xpToNextLevel: 3000
         });
+        // Force refresh shop for demo
         updateShopInventory("General", true); 
+    }
+    // Shuffle the current active case again to ensure randomness on start
+    if (activeCase) {
+        setActiveCase(shuffleCaseChoices(activeCase));
     }
     setPhase(GamePhase.SCENARIO);
   };
 
+  /**
+   * Updates shop inventory using Predictive Logic
+   */
   const updateShopInventory = (theme: string, forceDemo: boolean = false) => {
       if (forceDemo || isDemoMode) {
           setShopItems(VENDING_MACHINE_ITEMS);
           return;
       }
 
-      const t = theme.toLowerCase();
-      const relevantItems = VENDING_MACHINE_ITEMS.filter(i => 
-        i.tags?.some(tag => t.includes(tag))
-      );
-      const otherItems = VENDING_MACHINE_ITEMS.filter(i => 
-        !i.tags?.some(tag => t.includes(tag))
-      );
+      // Gather next few cases for prediction
+      // 1. Get current index + next 2 from initial/generated pool
+      const nextCases: PatientCase[] = [];
       
-      const shuffle = (arr: Item[]) => [...arr].sort(() => 0.5 - Math.random());
-      
-      let selection: Item[] = [];
-      if (relevantItems.length > 0) {
-          selection.push(relevantItems[Math.floor(Math.random() * relevantItems.length)]);
+      // Look at generated queue first
+      if (generatedCases.length > 0) {
+          nextCases.push(...generatedCases.slice(0, 3));
       }
-      const filled = shuffle(otherItems).slice(0, 3 - selection.length);
-      selection = [...selection, ...filled];
       
-      selection = Array.from(new Set(selection.map(i => i.id)))
-        .map(id => VENDING_MACHINE_ITEMS.find(i => i.id === id)!);
+      // If not enough generated, look at Initial Queue (approximate logic since we random pick sometimes)
+      // We will just grab 3 random initial cases to simulate "upcoming" diversity
+      if (nextCases.length < 3) {
+          const randomInitials = [...INITIAL_CASES].sort(() => 0.5 - Math.random()).slice(0, 3 - nextCases.length);
+          nextCases.push(...randomInitials);
+      }
+
+      // Use the utility function
+      const recommendations = getRecommendedItems(
+          nextCases, 
+          playerState.inventory, 
+          VENDING_MACHINE_ITEMS
+      );
 
       // Always ensure Cozy Pillow is available if not owned, for the demo of features
       const pillow = VENDING_MACHINE_ITEMS.find(i => i.id === 'item_pillow_cozy');
-      if (pillow && !selection.some(i => i.id === pillow.id)) {
-          selection[2] = pillow;
+      if (pillow && !playerState.inventory.includes(pillow.id) && !recommendations.some(i => i.id === pillow.id)) {
+          // Replace the last item (lowest priority)
+          if (recommendations.length >= 4) {
+              recommendations[3] = pillow;
+          } else {
+              recommendations.push(pillow);
+          }
       }
 
-      setShopItems(selection);
+      setShopItems(recommendations);
   };
 
   useEffect(() => {
@@ -154,10 +173,27 @@ const App: React.FC = () => {
       return globalSuggestion || null;
   };
 
+  const handleLevelUp = (currentXp: number, currentLevel: number, currentXpToNext: number, currentCoins: number, addedCoins: number) => {
+      let newXp = currentXp;
+      let newLevel = currentLevel;
+      let newXpToNext = currentXpToNext;
+      let newLevelTitle = LEVEL_TITLES[Math.min(newLevel - 1, LEVEL_TITLES.length - 1)];
+      let newCoins = currentCoins + addedCoins;
+
+      if (newXp >= currentXpToNext) {
+          newLevel += 1;
+          newXpToNext = Math.floor(newXpToNext * 1.5);
+          newLevelTitle = LEVEL_TITLES[Math.min(newLevel - 1, LEVEL_TITLES.length - 1)];
+          newCoins += 50; 
+      }
+      return { newXp, newLevel, newXpToNext, newLevelTitle, newCoins };
+  };
+
   const handleMakeChoice = (choice: Choice) => {
     let finalCoinReward = choice.coinReward;
     let finalXpReward = choice.xpReward;
 
+    // Buffs
     if (playerState.inventory.includes('item_stethoscope_gold')) {
         finalCoinReward = Math.floor(finalCoinReward * 1.1);
     }
@@ -169,18 +205,13 @@ const App: React.FC = () => {
         }));
     }
 
-    const newXp = playerState.currentXp + finalXpReward;
-    let newLevel = playerState.level;
-    let newXpToNext = playerState.xpToNextLevel;
-    let newLevelTitle = playerState.levelTitle;
-    let newCoins = playerState.coins + finalCoinReward;
-
-    if (newXp >= playerState.xpToNextLevel) {
-        newLevel += 1;
-        newXpToNext = Math.floor(newXpToNext * 1.5);
-        newLevelTitle = LEVEL_TITLES[Math.min(newLevel - 1, LEVEL_TITLES.length - 1)];
-        newCoins += 50; 
-    }
+    const { newXp, newLevel, newXpToNext, newLevelTitle, newCoins } = handleLevelUp(
+        playerState.currentXp + finalXpReward,
+        playerState.level,
+        playerState.xpToNextLevel,
+        playerState.coins,
+        finalCoinReward
+    );
 
     const updatedState = {
         ...playerState,
@@ -198,36 +229,93 @@ const App: React.FC = () => {
 
     setLastChoice({ ...choice, coinReward: finalCoinReward, xpReward: finalXpReward });
     setPhase(GamePhase.FEEDBACK);
-
+    
+    // Refresh shop based on the *next* projected cases
     if (activeCase) {
         updateShopInventory(activeCase.medicalTheme || "General");
     }
 
+    // Trigger AI generation while user is on Feedback screen
     prefetchNextCase(newLevelTitle);
   };
 
-  const prefetchNextCase = useCallback(async (levelTitle: string) => {
-      const totalAvailable = INITIAL_CASES.length + generatedCases.length;
-      const nextIndex = currentCaseIndex + 1;
+  // Special handler for Mini-Game Rewards
+  const handleMiniGameReward = (coins: number) => {
+    setPlayerState(prev => ({
+        ...prev,
+        coins: prev.coins + coins
+    }));
+  };
+
+  // Special handler for the "Optimized Path" button (Treat with Item)
+  const handleSolveWithItem = () => {
+      if (!activeCase?.optimizedResolution) return;
+
+      const resolution = activeCase.optimizedResolution;
       
-      if (nextIndex >= totalAvailable && !isGenerating) {
-          setIsGenerating(true);
-          try {
-            const newCase = await generateCase(levelTitle);
-            if (newCase) {
-                setGeneratedCases(prev => [...prev, newCase]);
-            } else {
-                const randomRecycle = { ...INITIAL_CASES[Math.floor(Math.random() * INITIAL_CASES.length)] };
-                randomRecycle.id = `recycled_${Date.now()}`;
-                setGeneratedCases(prev => [...prev, randomRecycle]);
-            }
-          } catch (e) {
-              console.error(e);
-          } finally {
-              setIsGenerating(false);
-          }
+      const { newXp, newLevel, newXpToNext, newLevelTitle, newCoins } = handleLevelUp(
+        playerState.currentXp + resolution.xpReward,
+        playerState.level,
+        playerState.xpToNextLevel,
+        playerState.coins,
+        resolution.coinReward
+      );
+
+      const updatedState = {
+        ...playerState,
+        coins: newCoins,
+        currentXp: newXp,
+        level: newLevel,
+        xpToNextLevel: newXpToNext,
+        levelTitle: newLevelTitle
+      };
+      
+      setPlayerState(updatedState);
+
+      const suggestion = calculateSuggestion(newCoins, updatedState.inventory, shopItems);
+      setSuggestedItem(suggestion);
+
+      // Create a "Choice" object on the fly to reuse the feedback overlay
+      const optimizedChoice: Choice = {
+          id: 'optimized_win',
+          text: resolution.text,
+          type: 'GOLD',
+          feedback: resolution.feedback,
+          coinReward: resolution.coinReward,
+          xpReward: resolution.xpReward
+      };
+
+      setLastChoice(optimizedChoice);
+      setPhase(GamePhase.FEEDBACK);
+
+      if (activeCase) {
+        updateShopInventory(activeCase.medicalTheme || "General");
       }
-  }, [currentCaseIndex, generatedCases.length, isGenerating]);
+      prefetchNextCase(newLevelTitle);
+  };
+
+  const prefetchNextCase = useCallback(async (levelTitle: string) => {
+      // Logic: If we are running low on generated cases, fetch one now
+      // This runs in background while user reads feedback
+      
+      // Limit queue to avoid spamming API
+      if (generatedCases.length > 2 || isGenerating) return;
+
+      setIsGenerating(true);
+      try {
+        const newCase = await generateCase(levelTitle);
+        if (newCase) {
+            setGeneratedCases(prev => [...prev, newCase]);
+        } else {
+            // If API fails, we just don't add to queue, 
+            // handleNextCase will fallback to random INITIAL_CASES
+        }
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setIsGenerating(false);
+      }
+  }, [generatedCases.length, isGenerating]);
 
   // Manual generation logic with timeout for the Testing Screen
   const handleManualGenerate = async () => {
@@ -251,8 +339,7 @@ const App: React.FC = () => {
       if (newCase) {
         setGeneratedCases(prev => [newCase, ...prev]);
       } else {
-        // Handle timeout or null response (UI will just stop loading)
-        // Ideally show a toast, but keeping it simple as requested
+        // Handle timeout or null response
       }
     } catch (e) {
       console.error("Manual generation failed", e);
@@ -262,28 +349,40 @@ const App: React.FC = () => {
   };
 
   const handleNextCase = () => {
-    // Basic logic to pick random or sequential for "Next"
-    // Since we want variety, let's try to pick from Generated first, then random Initial
-    
     const nextIndex = currentCaseIndex + 1;
     let nextCase: PatientCase;
 
-    // Prioritize generated content if available to keep it fresh
-    if (generatedCases.length > 0 && nextIndex % 2 !== 0) { // interleave?
-        const genCase = generatedCases.shift(); // consume it? or just index
-        // better to just check if we have one ready
-        if (genCase) nextCase = genCase;
-        else nextCase = INITIAL_CASES[Math.floor(Math.random() * INITIAL_CASES.length)];
+    // If we have generated cases in the queue, use them
+    if (generatedCases.length > 0) { 
+        const genCase = generatedCases.shift(); 
+        if (genCase) {
+          nextCase = genCase;
+        } else {
+          nextCase = getRandomCase(INITIAL_CASES) || INITIAL_CASES[0];
+        }
     } else {
-        // Pick random initial case different from current
-        let candidates = INITIAL_CASES.filter(c => c.id !== activeCase?.id);
-        nextCase = candidates[Math.floor(Math.random() * candidates.length)];
+        // Use Weighted Random Selection from Initial Cases
+        const randomCase = getRandomCase(INITIAL_CASES);
+        
+        // Ensure we don't pick the exact same case twice in a row if possible
+        if (randomCase && randomCase.id === activeCase?.id && INITIAL_CASES.length > 1) {
+             let retries = 3;
+             let newRandom = randomCase;
+             while (retries > 0 && newRandom.id === activeCase?.id) {
+                 newRandom = getRandomCase(INITIAL_CASES) || INITIAL_CASES[0];
+                 retries--;
+             }
+             nextCase = newRandom;
+        } else {
+             nextCase = randomCase || INITIAL_CASES[0];
+        }
     }
 
-    // Safety fallback
-    if (!nextCase) nextCase = INITIAL_CASES[0];
+    // CRITICAL: Shuffle the answer choices for the new case before displaying
+    // This ensures variety even if the same case ID is repeated later
+    const shuffledCase = shuffleCaseChoices(nextCase);
 
-    setActiveCase(nextCase);
+    setActiveCase(shuffledCase);
     setCurrentCaseIndex(nextIndex);
     setPhase(GamePhase.SCENARIO);
   };
@@ -316,6 +415,7 @@ const App: React.FC = () => {
           <TestingScreen 
             initialCases={INITIAL_CASES}
             generatedCases={generatedCases}
+            playerState={playerState}
             onBackToStart={() => setPhase(GamePhase.START)}
             onBackToGame={() => setPhase(GamePhase.SCENARIO)}
             onGenerate={handleManualGenerate}
@@ -339,6 +439,8 @@ const App: React.FC = () => {
                         onMakeChoice={handleMakeChoice} 
                         isLoading={phase === GamePhase.LOADING}
                         isCozyMode={isCozyMode}
+                        inventory={playerState.inventory}
+                        onSolveWithItem={handleSolveWithItem}
                     />
                 )}
            </div>
@@ -353,6 +455,7 @@ const App: React.FC = () => {
                     onBuyItem={handleBuyItem}
                     playerCoins={playerState.coins}
                     isCozyMode={isCozyMode}
+                    onMiniGameReward={handleMiniGameReward}
                 />
            )}
 

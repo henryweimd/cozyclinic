@@ -1,16 +1,29 @@
-import React from 'react';
-import { PatientCase, Choice } from '../types';
+
+import React, { useState } from 'react';
+import { PatientCase, Choice, Item } from '../types';
 import { parseMedicalText } from '../utils';
-import { Activity, FileText, AlertCircle, Sparkles, Beaker, User, Image as ImageIcon, Heart } from 'lucide-react';
+import { Activity, FileText, AlertCircle, Sparkles, Beaker, User, Image as ImageIcon, Heart, Lock, Unlock, Search, CheckCircle } from 'lucide-react';
+import { VENDING_MACHINE_ITEMS } from '../constants';
 
 interface PatientCardProps {
   patientCase: PatientCase;
   onMakeChoice: (choice: Choice) => void;
   isLoading: boolean;
   isCozyMode: boolean;
+  inventory: string[];
+  onSolveWithItem?: () => void; // New callback for Optimized Path
 }
 
-export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeChoice, isLoading, isCozyMode }) => {
+export const PatientCard: React.FC<PatientCardProps> = ({ 
+  patientCase, 
+  onMakeChoice, 
+  isLoading, 
+  isCozyMode,
+  inventory,
+  onSolveWithItem
+}) => {
+  const [isClueRevealed, setIsClueRevealed] = useState(false);
+
   if (isLoading) {
       return (
           <div className="flex-1 flex flex-col items-center justify-center space-y-4 p-8 animate-pulse">
@@ -30,6 +43,12 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
   const exam = 'physicalExam' in activeVariant ? activeVariant.physicalExam : patientCase.physicalExam;
   const choices = 'choices' in activeVariant ? activeVariant.choices : patientCase.choices;
 
+  // Tool Logic
+  const requiredToolId = patientCase.requiredToolId;
+  const hasTool = requiredToolId ? inventory.includes(requiredToolId) : false;
+  const requiredItemDetails = requiredToolId ? VENDING_MACHINE_ITEMS.find(i => i.id === requiredToolId) : null;
+  const isOptimizedPath = !!patientCase.optimizedResolution;
+
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-4 pb-48 scroll-smooth">
       {/* Condensed Header */}
@@ -40,12 +59,12 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
          </div>
          <div className="flex-1 min-w-0 z-10">
              <div className="flex items-center space-x-2">
-                 <h2 className="text-lg font-bold text-slate-800 truncate">{patientCase.patientName}</h2>
-                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${isCozyMode ? 'bg-pink-200 text-pink-600' : 'bg-indigo-100 text-indigo-500'}`}>
+                 <h2 className="text-xl font-bold text-slate-800 truncate">{patientCase.patientName}</h2>
+                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${isCozyMode ? 'bg-pink-200 text-pink-600' : 'bg-indigo-100 text-indigo-500'}`}>
                     {patientCase.medicalTheme}
                  </span>
              </div>
-             <p className="text-slate-500 text-xs truncate">
+             <p className="text-slate-500 text-sm truncate">
                 {patientCase.patientAge} • {patientCase.patientVisual.replace(/^[^\s]+\s/, '')}
              </p>
          </div>
@@ -56,18 +75,18 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-50">
         
         {/* CC & Vitals Row */}
-        <div className="p-3 space-y-3">
+        <div className="p-4 space-y-3">
              <div className="flex items-start space-x-2">
-                <AlertCircle className="text-red-400 mt-0.5 shrink-0" size={16} />
+                <AlertCircle className="text-red-400 mt-1 shrink-0" size={18} />
                 <div className="leading-tight">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase mr-2">CC:</span>
-                    <span className={`text-slate-800 font-bold italic text-sm ${isCozyMode ? 'font-comic' : ''}`}>"{cc.replace(/"/g, '')}"</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase mr-2">CC:</span>
+                    <span className={`text-slate-800 font-bold italic text-base ${isCozyMode ? 'font-comic' : ''}`}>"{cc.replace(/"/g, '')}"</span>
                 </div>
             </div>
             
-            <div className="flex items-center space-x-2 bg-slate-50 p-2 rounded-lg overflow-x-auto">
-                 <Activity className="text-emerald-500 shrink-0" size={16} />
-                 <div className="flex space-x-3 text-xs whitespace-nowrap">
+            <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg overflow-x-auto">
+                 <Activity className="text-emerald-500 shrink-0" size={18} />
+                 <div className="flex space-x-4 text-sm whitespace-nowrap">
                     <span className="font-mono text-slate-600"><b>HR:</b> {patientCase.vitals.hr}</span>
                     <span className="font-mono text-slate-600"><b>BP:</b> {patientCase.vitals.bp}</span>
                     <span className="font-mono text-slate-600"><b>T:</b> {patientCase.vitals.temp}</span>
@@ -78,9 +97,9 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
         </div>
 
         {/* HPI */}
-        <div className="p-3 flex items-start space-x-2">
-            <FileText className="text-blue-400 mt-0.5 shrink-0" size={16} />
-            <div className="text-xs text-slate-600 leading-relaxed">
+        <div className="p-4 flex items-start space-x-2">
+            <FileText className="text-blue-400 mt-1 shrink-0" size={18} />
+            <div className="text-sm text-slate-600 leading-relaxed">
                 <span className="font-bold text-slate-400 uppercase mr-1">HPI:</span>
                 {hpi}
             </div>
@@ -88,13 +107,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
 
         {/* Labs (Conditional) */}
         {patientCase.labs && patientCase.labs.length > 0 && (
-            <div className="p-3 flex items-start space-x-2 bg-yellow-50/50">
-                <Beaker className="text-yellow-500 mt-0.5 shrink-0" size={16} />
-                <div className="text-xs">
+            <div className="p-4 flex items-start space-x-2 bg-yellow-50/50">
+                <Beaker className="text-yellow-500 mt-1 shrink-0" size={18} />
+                <div className="text-sm">
                      <span className="font-bold text-yellow-600 uppercase mr-1">Labs:</span>
                      <div className="flex flex-wrap gap-2 mt-1">
                         {patientCase.labs.map((lab, i) => (
-                            <span key={i} className="bg-white border border-yellow-200 text-slate-700 px-2 py-0.5 rounded shadow-sm font-mono text-[10px]">
+                            <span key={i} className="bg-white border border-yellow-200 text-slate-700 px-2 py-1 rounded shadow-sm font-mono text-xs">
                                 {lab}
                             </span>
                         ))}
@@ -104,13 +123,69 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
         )}
 
         {/* Physical Exam */}
-        <div className="p-3 flex items-start space-x-2">
-            <User className="text-purple-400 mt-0.5 shrink-0" size={16} />
-            <div className="text-xs text-slate-600 leading-relaxed">
+        <div className="p-4 flex items-start space-x-2">
+            <User className="text-purple-400 mt-1 shrink-0" size={18} />
+            <div className="text-sm text-slate-600 leading-relaxed">
                 <span className="font-bold text-slate-400 uppercase mr-1">Exam:</span>
                 {parseMedicalText(exam)}
             </div>
         </div>
+        
+        {/* Advanced Tool Analysis / Optimized Path Section */}
+        {requiredToolId && (
+           <div className={`p-4 transition-colors border-t border-slate-100 ${isClueRevealed ? 'bg-indigo-50' : 'bg-slate-50'}`}>
+              {!isClueRevealed ? (
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${hasTool ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}>
+                            {hasTool ? <Unlock size={18} /> : <Lock size={18} />}
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                {isOptimizedPath ? "Item Resolution Available" : "Advanced Diagnostics"}
+                            </p>
+                            <p className="text-sm font-semibold text-slate-800">
+                                {hasTool 
+                                    ? `Use ${requiredItemDetails?.name} to ${isOptimizedPath ? 'Treat' : 'Examine'}` 
+                                    : `Requires: ${requiredItemDetails?.name}`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    {hasTool && (
+                        <button 
+                            onClick={() => {
+                                if (isOptimizedPath && onSolveWithItem) {
+                                    onSolveWithItem();
+                                } else {
+                                    setIsClueRevealed(true);
+                                }
+                            }}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold active:scale-95 transition-all shadow-md flex items-center gap-2 ${
+                                isOptimizedPath 
+                                ? 'bg-green-500 text-white hover:bg-green-600 shadow-green-200' 
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200'
+                            }`}
+                        >
+                            {isOptimizedPath ? <CheckCircle size={14} /> : <Search size={14} />}
+                            {isOptimizedPath ? "Use Item" : "Examine"}
+                        </button>
+                    )}
+                </div>
+              ) : (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                     <div className="flex items-center gap-2 mb-1">
+                        <Sparkles size={14} className="text-indigo-500" />
+                        <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">Diagnostic Clue Revealed</span>
+                     </div>
+                     <p className="text-sm font-medium text-slate-800 italic border-l-4 border-indigo-300 pl-3 py-1">
+                        "{patientCase.revealedClue}"
+                     </p>
+                </div>
+              )}
+           </div>
+        )}
+
       </div>
 
       {/* AI Generated Image */}
@@ -121,28 +196,28 @@ export const PatientCard: React.FC<PatientCardProps> = ({ patientCase, onMakeCho
                 alt="Medical Illustration" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[9px] px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
-                <Sparkles size={8} /> AI Generated
+              <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full backdrop-blur-sm flex items-center gap-1">
+                <Sparkles size={10} /> AI Generated
               </div>
           </div>
       ) : patientCase.imagePrompt ? (
           <div className="w-full aspect-[21/9] rounded-xl bg-slate-100 flex items-center justify-center border border-dashed border-slate-300">
              <div className="flex flex-col items-center text-slate-400 animate-pulse">
-                <ImageIcon size={20} />
-                <span className="text-[10px] mt-1 font-medium">Generating visualization...</span>
+                <ImageIcon size={24} />
+                <span className="text-xs mt-2 font-medium">Generating visualization...</span>
              </div>
           </div>
       ) : null}
 
       {/* Orders */}
       <div className="pt-2">
-        <h3 className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Select Order {isCozyMode ? '(Cozy Mode)' : ''}</h3>
-        <div className="grid grid-cols-1 gap-2">
+        <h3 className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Select Order {isCozyMode ? '(Cozy Mode)' : ''}</h3>
+        <div className="grid grid-cols-1 gap-3">
             {choices.map((choice) => (
                 <button
                     key={choice.id}
                     onClick={() => onMakeChoice(choice)}
-                    className={`w-full bg-white border hover:bg-pink-50 text-slate-700 hover:text-pink-700 p-3 rounded-lg text-left transition-all duration-200 shadow-sm text-xs font-semibold active:scale-[0.99] ${isCozyMode ? 'border-pink-200' : 'border-slate-200 hover:border-pink-300'}`}
+                    className={`w-full bg-white border hover:bg-pink-50 text-slate-700 hover:text-pink-700 p-4 rounded-xl text-left transition-all duration-200 shadow-sm text-sm font-semibold active:scale-[0.99] ${isCozyMode ? 'border-pink-200' : 'border-slate-200 hover:border-pink-300'}`}
                 >
                     {choice.text}
                 </button>

@@ -48,8 +48,8 @@ export const VendingMachine: React.FC<VendingMachineProps> = ({
                     <div className="text-4xl mb-2 bg-pink-50 w-16 h-16 flex items-center justify-center rounded-full">
                         {item.icon}
                     </div>
-                    <h3 className="font-bold text-slate-800 text-sm mb-1">{item.name}</h3>
-                    <p className="text-xs text-slate-500 mb-4 h-10 overflow-hidden line-clamp-2">{item.description}</p>
+                    <h3 className="font-bold text-slate-800 text-base mb-1">{item.name}</h3>
+                    <p className="text-sm text-slate-500 mb-4 h-14 overflow-hidden line-clamp-2 leading-tight">{item.description}</p>
                     
                     <button 
                         disabled={!canAfford || (isOwned && !isConsumable)}
@@ -70,7 +70,7 @@ export const VendingMachine: React.FC<VendingMachineProps> = ({
       </div>
       
       <div className="shrink-0 bg-white border-t border-slate-100">
-        <div className="p-4 text-center text-xs text-slate-400 border-b border-slate-50">
+        <div className="p-4 text-center text-sm text-slate-400 border-b border-slate-50">
             New items arrive every shift!
         </div>
         

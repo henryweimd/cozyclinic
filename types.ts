@@ -43,6 +43,17 @@ export interface PatientCase {
   };
   authoritativeLink?: string;
   learningTidbit?: string;
+  
+  // New Inventory-Gated & Randomization Logic
+  requiredToolId?: string; 
+  revealedClue?: string; // Narrative description of the optimized path
+  randomWeight?: number; // 1-100, higher is more frequent
+  optimizedResolution?: {
+      text: string;
+      feedback: string;
+      coinReward: number;
+      xpReward: number;
+  };
 }
 
 export interface Item {

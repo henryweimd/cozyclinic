@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Choice, OutcomeType, PatientCase, Item } from '../types';
 import { ArrowRight, CheckCircle, AlertTriangle, ShieldAlert, ExternalLink, Pause, Play, Sparkles, BookOpen } from 'lucide-react';
+import { ReflexGame } from './ReflexGame';
 
 interface FeedbackOverlayProps {
   choice: Choice;
@@ -12,6 +13,7 @@ interface FeedbackOverlayProps {
   onBuyItem?: (item: Item) => void;
   playerCoins: number;
   isCozyMode: boolean;
+  onMiniGameReward?: (coins: number) => void;
 }
 
 const getOutcomeConfig = (type: OutcomeType) => {
@@ -76,7 +78,8 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
   suggestedItem, 
   onBuyItem, 
   playerCoins,
-  isCozyMode
+  isCozyMode,
+  onMiniGameReward
 }) => {
   const config = getOutcomeConfig(choice.type);
   const AUTO_ADVANCE_TIME = 15;
@@ -127,21 +130,21 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
         
         {/* Feedback Card */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 relative">
-            <div className="absolute -top-2.5 left-4 bg-white px-2 text-[10px] font-bold uppercase text-slate-400 border border-slate-100 rounded-full">
+            <div className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase text-slate-400 border border-slate-100 rounded-full">
                 Mentor Feedback
             </div>
-            <p className="text-slate-700 text-sm leading-relaxed font-medium mt-1">"{choice.feedback}"</p>
+            <p className="text-slate-700 text-base leading-relaxed font-medium mt-1">"{choice.feedback}"</p>
         </div>
 
         {/* Correction Block - Only show if the user didn't pick Gold and a Gold option exists */}
         {choice.type !== 'GOLD' && bestChoice && (
             <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 relative animate-in slide-in-from-bottom-2 fade-in duration-500 delay-100">
-                <div className="absolute -top-2.5 left-4 bg-white px-2 text-[10px] font-bold uppercase text-emerald-500 border border-emerald-100 rounded-full flex items-center gap-1">
+                <div className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase text-emerald-500 border border-emerald-100 rounded-full flex items-center gap-1">
                     <Sparkles size={10} /> Best Approach
                 </div>
                 <div className="mt-1">
-                    <p className="text-xs font-bold text-emerald-700 mb-1">{bestChoice.text}</p>
-                    <p className="text-emerald-600 text-xs leading-relaxed opacity-90">"{bestChoice.feedback}"</p>
+                    <p className="text-sm font-bold text-emerald-700 mb-1">{bestChoice.text}</p>
+                    <p className="text-emerald-600 text-sm leading-relaxed opacity-90">"{bestChoice.feedback}"</p>
                 </div>
             </div>
         )}
@@ -149,11 +152,11 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
         {/* Rewards */}
         <div className="grid grid-cols-2 gap-3">
             <div className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl text-center">
-                <span className="block text-yellow-600 text-[10px] font-bold uppercase">Reward</span>
+                <span className="block text-yellow-600 text-xs font-bold uppercase">Reward</span>
                 <span className="text-xl font-bold text-yellow-700">+{choice.coinReward} 🪙</span>
             </div>
              <div className="bg-purple-50 border border-purple-100 p-3 rounded-xl text-center">
-                <span className="block text-purple-600 text-[10px] font-bold uppercase">XP</span>
+                <span className="block text-purple-600 text-xs font-bold uppercase">XP</span>
                 <span className="text-xl font-bold text-purple-700">+{choice.xpReward} XP</span>
             </div>
         </div>
@@ -163,9 +166,9 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
              <div className="bg-pink-50 border border-pink-100 p-3 rounded-xl flex items-center space-x-3 shadow-sm animate-pulse">
                 <div className="text-2xl bg-white p-2 rounded-full shadow-sm">{suggestedItem.icon}</div>
                 <div className="flex-1">
-                    <h4 className="text-[10px] font-bold text-pink-500 uppercase">Recommended</h4>
-                    <p className="text-xs font-bold text-slate-700">{suggestedItem.name}</p>
-                    <p className="text-[10px] text-slate-500">{suggestedItem.description}</p>
+                    <h4 className="text-xs font-bold text-pink-500 uppercase">Recommended</h4>
+                    <p className="text-sm font-bold text-slate-700">{suggestedItem.name}</p>
+                    <p className="text-xs text-slate-500">{suggestedItem.description}</p>
                 </div>
                 <button 
                     onClick={() => {
@@ -183,8 +186,8 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
         {patientCase.authoritativeLink && (
             <div className="mt-2">
                 <div className="flex items-center justify-between mb-1 px-1">
-                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <BookOpen size={10} />
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                        <BookOpen size={12} />
                         Learn More
                      </span>
                 </div>
@@ -204,10 +207,10 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
                     </div>
                     
                     <div className="flex-1 min-w-0 z-10">
-                        <h4 className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
+                        <h4 className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
                             {getSourceName(patientCase.authoritativeLink)}
                         </h4>
-                        <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                        <p className="text-xs text-slate-500 mt-0.5 leading-snug">
                              {patientCase.learningTidbit || (isCozyMode 
                                 ? `See how real doctors treat ${patientCase.medicalTheme}!`
                                 : `Review authoritative guidelines and clinical protocols for ${patientCase.medicalTheme}.`)
@@ -217,14 +220,20 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
                 </a>
             </div>
         )}
+
+        {/* Mini Game Area */}
+        <ReflexGame 
+            onInteraction={() => setIsPaused(true)}
+            onComplete={(coins) => onMiniGameReward && onMiniGameReward(coins)}
+        />
       </div>
 
       {/* Footer / Next Action */}
       <div className="p-5 bg-white border-t border-slate-100 shrink-0">
-        <div className="flex justify-between items-center mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="flex justify-between items-center mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
             <span>Next Patient</span>
             <span className="flex items-center gap-1">
-                {isPaused ? <Pause size={10} /> : <Play size={10} />}
+                {isPaused ? <Pause size={12} /> : <Play size={12} />}
                 {isPaused ? "Paused" : `Auto-advance in ${Math.ceil(timeLeft)}s`}
             </span>
         </div>

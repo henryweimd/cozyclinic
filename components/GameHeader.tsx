@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PlayerState } from '../types';
 import { Heart, Coins, ShoppingBag, Sparkles, Stethoscope } from 'lucide-react';
@@ -22,7 +23,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       <div className="flex justify-between items-center mb-2">
         <div className="flex flex-col">
           <span className="text-xs font-bold text-pink-400 uppercase tracking-wider">Level {playerState.level}</span>
-          <span className="text-sm font-bold text-slate-800">{playerState.levelTitle}</span>
+          <span className="text-base font-bold text-slate-800">{playerState.levelTitle}</span>
         </div>
         
         <div className="flex items-center space-x-2">
@@ -37,7 +38,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             title={isCozyMode ? "Switch to Pro Mode" : "Switch to Cozy Mode"}
           >
              {isCozyMode ? <Sparkles size={14} /> : <Stethoscope size={14} />}
-             <span className="text-[10px] font-bold hidden sm:inline">{isCozyMode ? 'Cozy' : 'Pro'}</span>
+             <span className="text-xs font-bold hidden sm:inline">{isCozyMode ? 'Cozy' : 'Pro'}</span>
           </button>
 
           <button 
@@ -50,7 +51,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
           <div className="flex items-center space-x-1 bg-yellow-100 px-2 py-1.5 rounded-full border border-yellow-200">
             <Coins size={14} className="text-yellow-600" />
-            <span className="text-xs font-bold text-yellow-700">{playerState.coins}</span>
+            <span className="text-sm font-bold text-yellow-700">{playerState.coins}</span>
           </div>
         </div>
       </div>
@@ -62,7 +63,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           style={{ width: `${progressPercent}%` }}
         ></div>
         <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[9px] font-bold text-slate-500 drop-shadow-sm">
+            <span className="text-[10px] font-bold text-slate-500 drop-shadow-sm">
                 {playerState.currentXp} / {playerState.xpToNextLevel} XP
             </span>
         </div>
